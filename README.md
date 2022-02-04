@@ -1,20 +1,16 @@
 # Using Keycloak Authorization Services and Policy Enforcer to Protect JAX-RS Applications
 
-In this example, we build a very simple microservice which offers two endpoints:
+In this example, we build a very simple microservice which offers one endpoints:
 
-* `/api/users/me`
-* `/api/admin`
+* `/accounts`
 
 These endpoints are protected and can only be accessed if a client is sending a bearer token along with the request, which must be valid (e.g.: signature, expiration and audience) and trusted by the microservice.
+The HTTP POST with path /accounts creates an new account. It  can only run by users with admin role.
+The HTTP GET with path /accounts can view account. Users with the agent role can view accounts.
 
 The bearer token is issued by a Keycloak Server and represents the subject to which the token was issued for.
 For being an OAuth 2.0 Authorization Server, the token also references the client acting on behalf of the user.
 
-The `/api/users/me` endpoint can be accessed by any user with a valid token.
-As a response, it returns a JSON document with details about the user where these details are obtained from the information carried on the token.
-This endpoint is protected with RBAC (Role-Based Access Control) and only users granted with the `user` role can access this endpoint.
-
-The `/api/admin` endpoint is protected with RBAC (Role-Based Access Control) and only users granted with the `admin` role can access it.
 
 This is a very simple example using RBAC policies to govern access to your resources.
 However, Keycloak supports other types of policies that you can use to perform even more fine-grained access control.
@@ -25,18 +21,42 @@ By using this example, you'll see that your application is completely decoupled 
 To compile and run this demo you will need:
 
 - JDK 11+
-- GraalVM
 - Keycloak
 
-### Configuring GraalVM and JDK 11+
+### Configuring JDK 11+
+Make sure that `JAVA_HOME` environment variables have been set, and that a JDK 11+ `java` command is on the path.
 
-Make sure that both the `GRAALVM_HOME` and `JAVA_HOME` environment variables have
-been set, and that a JDK 11+ `java` command is on the path.
+## Starting and Configuring the Keycloak Server
 
-See the [Building a Native Executable guide](https://quarkus.io/guides/building-native-image)
-for help setting up your environment.
+To start a Keycloak Server you can use Docker and just run the following command: ( You may need to change the shared directory location !)
+Note : The full database  export can be found at :  imports/full-db-export.json
+$ docker run --name keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -p 8280:8080 -p 8543:8443 \
+  -v "D:/dev/Quarkus/testing/keycloak-authorization-sample/imports:/opt/jboss/keycloak/imports" \
+  quay.io/keycloak/keycloak:15.0.2`
+
+Connect to the the keycloack container and run full database import
+
+bash-4.4$ /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 \
+  -Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile \
+  -Dkeycloak.migration.file=/opt/jboss/keycloak/imports/full-db-export.json \
+  -Dkeycloak.migration.strategy=OVERWRITE_EXISTING  -Dkeycloak.profile.feature.upload_scripts=enabled
+
+For setup details read: [ https://www.helikube.de/keycloak-authorization-service-rbac/ ]
+
+You should be able to access your Keycloak Server at http://localhost:8180/auth or https://localhost:8543/auth.
+
+Log in as the `admin` user to access the Keycloak Administration Console.
+Username should be `admin` and password `admin`.
+
 
 ## Building the application
+:warning: **NOTE**: Wo do not want that Keycloak server will launch a container for us  ( happens whem  the application runs in dev mode !! ) 
+
+This mean we start the Quarkus app in production mode !
+
+$ mvn -Dquarkus-profile=prod  compile quarkus:dev
+
+
 
 Launch the Maven build on the checked out sources of this demo:
 ```bash
@@ -44,21 +64,7 @@ Launch the Maven build on the checked out sources of this demo:
 ```
 ## Starting and Configuring the Keycloak Server
 
-> :warning: **NOTE**: Do not start the Keycloak server when you run the application in a dev mode - `Dev Services for Keycloak` will launch a container for you.
-
-To start a Keycloak Server you can use Docker and just run the following command:
-
-```bash
-docker run --name keycloak -e DB_VENDOR=H2 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -p 8180:8080 -p 8543:8443 quay.io/keycloak/keycloak:{keycloak version}
-```
-
-You should be able to access your Keycloak Server at http://localhost:8180/auth or https://localhost:8543/auth.
-
-Log in as the `admin` user to access the Keycloak Administration Console.
-Username should be `admin` and password `admin`.
-
-Import the [realm configuration file](config/quarkus-realm.json) to create a new realm.
-For more details, see the Keycloak documentation about how to [create a new realm](https://www.keycloak.org/docs/latest/server_admin/index.html#_create-realm).
+:warning: **NOTE**: Do not start the Keycloak server when you run the application in a dev mode - `Dev Services for Keycloak` will launch a container for you.
 
 ### Live coding with Quarkus
 
