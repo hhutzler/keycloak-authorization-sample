@@ -8,6 +8,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import io.quarkus.security.identity.SecurityIdentity;
+import org.jose4j.json.internal.json_simple.JSONObject;
 
 @Path("/accounts")
 public class AccountResource {
@@ -20,8 +21,9 @@ public class AccountResource {
     public String testAgentAction() {
         String userName;
         userName = keycloakSecurityContext.getPrincipal().getName();
-
-        return "User " + userName + ": Can view accounts !\n\n";
+        JSONObject jo = new JSONObject();
+        jo.put("Message", "User " + userName + ": Can view accounts !");
+        return jo.toJSONString();
     }
 
     @POST
@@ -29,7 +31,8 @@ public class AccountResource {
     public String testAdminAction() {
         String userName;
         userName = keycloakSecurityContext.getPrincipal().getName();
-
-        return "User " + userName + ": Can create accounts !\n\n";
+        JSONObject jo = new JSONObject();
+        jo.put("Message", "User " + userName + ": Can create accounts !");
+        return jo.toJSONString();
     }
 }

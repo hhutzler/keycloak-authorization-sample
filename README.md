@@ -54,7 +54,7 @@ Username should be `admin` and password `admin`.
 
 This mean we start the Quarkus app in production mode !
 
-$ mvn -Dquarkus-profile=prod  compile quarkus:dev
+$ mvn  compile quarkus:dev
 
 
 
